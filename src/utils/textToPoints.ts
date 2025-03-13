@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { Vector3D } from './vector';
 import { TextModeParams } from '../store';
 

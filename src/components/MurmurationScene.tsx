@@ -171,13 +171,19 @@ const MurmurationScene: React.FC = () => {
     setTrailKey(prev => prev + 1);
   }, [params.showTrails, params.trailLength]);
   
+  // Update the paramsRef when params change to avoid visual glitches
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+  
   // Animation loop
   useFrame(() => {
     if (isPaused || !birdsRef.current.length) return;
     
-    // Update each bird
+    // Update each bird with the immutable referenced params to avoid
+    // visual glitches when params change during a frame update
     birdsRef.current.forEach(bird => {
-      bird.update(birdsRef.current, params, isTextMode, textParams);
+      bird.update(birdsRef.current, paramsRef.current, isTextMode, textParams);
     });
   });
   

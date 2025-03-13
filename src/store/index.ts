@@ -15,6 +15,7 @@ export interface SimulationParams {
   boundaryRadius: number;
   windFactor: number;
   windDirection: [number, number, number];
+  horizonHeight: number; // Controls how low birds can fly
 }
 
 export interface TextModeParams {
@@ -41,6 +42,12 @@ interface StoreState {
   toggleTextMode: () => void;
   setTextMode: (active: boolean) => void;
   
+  // Background settings
+  backgroundType: 'color' | 'image';
+  backgroundImage: string | null;
+  setBackgroundType: (type: 'color' | 'image') => void;
+  setBackgroundImage: (imageUrl: string | null) => void;
+  
   // Presets
   savePreset: (name: string) => void;
   loadPreset: (name: string) => void;
@@ -66,6 +73,7 @@ const DEFAULT_PARAMS: SimulationParams = {
   boundaryRadius: 150,
   windFactor: 0,
   windDirection: [0, 0, 0],
+  horizonHeight: -40, // Default horizon height (negative value for below the center)
 };
 
 const DEFAULT_TEXT_PARAMS: TextModeParams = {
@@ -121,6 +129,12 @@ export const useStore = create<StoreState>((set) => ({
   isTextMode: false,
   toggleTextMode: () => set((state) => ({ isTextMode: !state.isTextMode })),
   setTextMode: (active) => set({ isTextMode: active }),
+  
+  // Background settings
+  backgroundType: 'color',
+  backgroundImage: null,
+  setBackgroundType: (type) => set({ backgroundType: type }),
+  setBackgroundImage: (imageUrl) => set({ backgroundImage: imageUrl }),
   
   presets: PRESET_CONFIGS,
   savePreset: (name) => 

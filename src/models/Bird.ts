@@ -151,6 +151,18 @@ export class Bird {
     return [0, 0, 0];
   }
 
+  // Calculate horizon force (prevent birds from flying below horizon)
+  horizonConstraint(params: SimulationParams): Vector3D {
+    // If bird is below horizon height
+    if (this.position[1] < params.horizonHeight) {
+      // Calculate force to push upward proportionally to how far below horizon
+      const depth = params.horizonHeight - this.position[1];
+      const strength = Math.min(1.0, depth / 20) * params.maxForce * 2.0;
+      return [0, strength, 0];
+    }
+    return [0, 0, 0];
+  }
+
   // Calculate wind force
   wind(params: SimulationParams): Vector3D {
     if (params.windFactor === 0) return [0, 0, 0];
@@ -224,7 +236,8 @@ export class Bird {
       this.lastParams.perceptionRadius !== params.perceptionRadius ||
       this.lastParams.boundaryRadius !== params.boundaryRadius ||
       this.lastParams.windFactor !== params.windFactor ||
-      this.lastParams.trailLength !== params.trailLength
+      this.lastParams.trailLength !== params.trailLength ||
+      this.lastParams.horizonHeight !== params.horizonHeight
     );
   }
 
@@ -241,6 +254,7 @@ export class Bird {
     const alignment = this.align(birds, params);
     const cohesion = this.cohesion(birds, params);
     const boundary = this.boundaries(params);
+    const horizonForce = this.horizonConstraint(params);
     const windForce = this.wind(params);
     
     // Apply all forces
@@ -248,6 +262,7 @@ export class Bird {
     this.applyForce(alignment);
     this.applyForce(cohesion);
     this.applyForce(boundary);
+    this.applyForce(horizonForce);
     this.applyForce(windForce);
     
     // Apply text formation force if in text mode

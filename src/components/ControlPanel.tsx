@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useStore } from '../store';
 
 const PanelContainer = styled.div`
   width: 320px;
+  min-width: 320px;
   height: 100%;
+  max-height: 100vh;
   background-color: ${({ theme }) => theme.colors.backgroundLight};
   border-left: 1px solid ${({ theme }) => theme.colors.accent};
   padding: 1.5rem;
@@ -12,6 +14,28 @@ const PanelContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  
+  /* Ensure proper scrolling on different browsers */
+  scrollbar-width: thin;
+  scrollbar-color: ${({ theme }) => theme.colors.accent} ${({ theme }) => theme.colors.secondary};
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: ${({ theme }) => theme.colors.secondary};
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: ${({ theme }) => theme.colors.accent};
+    border-radius: 4px;
+  }
 `;
 
 const Section = styled.div`
@@ -82,6 +106,11 @@ const Input = styled.input`
   border-radius: ${({ theme }) => theme.radii.md};
   font-size: ${({ theme }) => theme.fontSizes.sm};
   width: 100%;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const Checkbox = styled.input`
@@ -136,6 +165,17 @@ const Tab = styled.button<{ active: boolean }>`
   }
 `;
 
+const RadioGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const RadioOption = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const ControlPanel: React.FC = () => {
   const { 
     params, 
@@ -143,10 +183,13 @@ const ControlPanel: React.FC = () => {
     resetParams, 
     textParams, 
     updateTextParams, 
-    isTextMode, 
     presets, 
     loadPreset, 
-    savePreset 
+    savePreset,
+    backgroundType,
+    backgroundImage,
+    setBackgroundType,
+    setBackgroundImage 
   } = useStore();
   
   const [activeTab, setActiveTab] = useState<'simulation' | 'text'>('simulation');
@@ -159,6 +202,32 @@ const ControlPanel: React.FC = () => {
     }
   };
   
+  const handleBackgroundImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const imageUrl = URL.createObjectURL(file);
+      setBackgroundImage(imageUrl);
+      setBackgroundType('image');
+    }
+  };
+  
+  const removeBackgroundImage = () => {
+    if (backgroundImage) {
+      URL.revokeObjectURL(backgroundImage);
+    }
+    setBackgroundImage(null);
+    setBackgroundType('color');
+  };
+
+  // Cleanup background image URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (backgroundImage) {
+        URL.revokeObjectURL(backgroundImage);
+      }
+    };
+  }, [backgroundImage]);
+
   return (
     <PanelContainer>
       <TabContainer>
@@ -201,6 +270,67 @@ const ControlPanel: React.FC = () => {
               <Button onClick={handlePresetSave}>Save Current Settings</Button>
             </ControlGroup>
             <Button onClick={resetParams}>Reset to Default</Button>
+          </Section>
+          
+          <Section>
+            <SectionTitle>Background Settings</SectionTitle>
+            <ControlGroup>
+              <Label>Background Type</Label>
+              <RadioGroup>
+                <RadioOption>
+                  <input
+                    type="radio"
+                    name="backgroundType"
+                    checked={backgroundType === 'color'}
+                    onChange={() => setBackgroundType('color')}
+                  />
+                  <span>Color (Sky Blue)</span>
+                </RadioOption>
+                <RadioOption>
+                  <input
+                    type="radio"
+                    name="backgroundType"
+                    checked={backgroundType === 'image'}
+                    onChange={() => setBackgroundType('image')}
+                  />
+                  <span>Custom Image</span>
+                </RadioOption>
+              </RadioGroup>
+            </ControlGroup>
+            
+            {backgroundType === 'image' && (
+              <ControlGroup>
+                <Label>Custom Background Image</Label>
+                {backgroundImage ? (
+                  <div style={{ marginBottom: '10px' }}>
+                    <img 
+                      src={backgroundImage} 
+                      alt="Custom background" 
+                      style={{ 
+                        width: '100%', 
+                        height: '80px', 
+                        objectFit: 'cover', 
+                        borderRadius: '4px' 
+                      }} 
+                    />
+                    <Button onClick={removeBackgroundImage}>Remove Image</Button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBackgroundImageUpload}
+                      style={{ display: 'none' }}
+                      id="background-image-upload"
+                    />
+                    <label htmlFor="background-image-upload">
+                      <Button as="span">Upload Image</Button>
+                    </label>
+                  </div>
+                )}
+              </ControlGroup>
+            )}
           </Section>
           
           <Section>
@@ -330,6 +460,97 @@ const ControlPanel: React.FC = () => {
           </Section>
           
           <Section>
+            <SectionTitle>Environment</SectionTitle>
+            <ControlGroup>
+              <Label>
+                Horizon Height
+                <Value>{params.horizonHeight}</Value>
+              </Label>
+              <Slider 
+                type="range" 
+                min="-100" 
+                max="0" 
+                step="5"
+                value={params.horizonHeight}
+                onChange={(e) => updateParams({ horizonHeight: parseInt(e.target.value) })}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '-0.25rem' }}>
+                Controls the minimum flying height (visual horizon line)
+              </div>
+            </ControlGroup>
+            
+            <ControlGroup>
+              <Label>
+                Wind Factor
+                <Value>{params.windFactor.toFixed(1)}</Value>
+              </Label>
+              <Slider 
+                type="range" 
+                min="0" 
+                max="1.0" 
+                step="0.1"
+                value={params.windFactor}
+                onChange={(e) => updateParams({ windFactor: parseFloat(e.target.value) })}
+              />
+            </ControlGroup>
+            
+            {/* Always show wind direction, regardless of wind factor */}
+            <ControlGroup>
+              <Label>Wind Direction {params.windFactor <= 0 && <span style={{fontSize: '0.75rem'}}>(enable wind to use)</span>}</Label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Input 
+                  type="number" 
+                  min="-1" 
+                  max="1" 
+                  step="0.1"
+                  value={params.windDirection[0]}
+                  onChange={(e) => updateParams({ 
+                    windDirection: [
+                      parseFloat(e.target.value), 
+                      params.windDirection[1], 
+                      params.windDirection[2]
+                    ] 
+                  })}
+                  placeholder="X"
+                  disabled={params.windFactor <= 0}
+                />
+                <Input 
+                  type="number" 
+                  min="-1" 
+                  max="1" 
+                  step="0.1"
+                  value={params.windDirection[1]}
+                  onChange={(e) => updateParams({ 
+                    windDirection: [
+                      params.windDirection[0], 
+                      parseFloat(e.target.value), 
+                      params.windDirection[2]
+                    ] 
+                  })}
+                  placeholder="Y"
+                  disabled={params.windFactor <= 0}
+                />
+                <Input 
+                  type="number" 
+                  min="-1" 
+                  max="1" 
+                  step="0.1"
+                  value={params.windDirection[2]}
+                  onChange={(e) => updateParams({ 
+                    windDirection: [
+                      params.windDirection[0], 
+                      params.windDirection[1], 
+                      parseFloat(e.target.value)
+                    ] 
+                  })}
+                  placeholder="Z"
+                  disabled={params.windFactor <= 0}
+                />
+              </div>
+            </ControlGroup>
+          </Section>
+          
+          <Section>
             <SectionTitle>Visual Effects</SectionTitle>
             <ControlGroup>
               <Label>
@@ -356,74 +577,6 @@ const ControlPanel: React.FC = () => {
                   value={params.trailLength}
                   onChange={(e) => updateParams({ trailLength: parseInt(e.target.value) })}
                 />
-              </ControlGroup>
-            )}
-            
-            <ControlGroup>
-              <Label>
-                Wind Factor
-                <Value>{params.windFactor.toFixed(1)}</Value>
-              </Label>
-              <Slider 
-                type="range" 
-                min="0" 
-                max="1.0" 
-                step="0.1"
-                value={params.windFactor}
-                onChange={(e) => updateParams({ windFactor: parseFloat(e.target.value) })}
-              />
-            </ControlGroup>
-            
-            {params.windFactor > 0 && (
-              <ControlGroup>
-                <Label>Wind Direction</Label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <Input 
-                    type="number" 
-                    min="-1" 
-                    max="1" 
-                    step="0.1"
-                    value={params.windDirection[0]}
-                    onChange={(e) => updateParams({ 
-                      windDirection: [
-                        parseFloat(e.target.value), 
-                        params.windDirection[1], 
-                        params.windDirection[2]
-                      ] 
-                    })}
-                    placeholder="X"
-                  />
-                  <Input 
-                    type="number" 
-                    min="-1" 
-                    max="1" 
-                    step="0.1"
-                    value={params.windDirection[1]}
-                    onChange={(e) => updateParams({ 
-                      windDirection: [
-                        params.windDirection[0], 
-                        parseFloat(e.target.value), 
-                        params.windDirection[2]
-                      ] 
-                    })}
-                    placeholder="Y"
-                  />
-                  <Input 
-                    type="number" 
-                    min="-1" 
-                    max="1" 
-                    step="0.1"
-                    value={params.windDirection[2]}
-                    onChange={(e) => updateParams({ 
-                      windDirection: [
-                        params.windDirection[0], 
-                        params.windDirection[1], 
-                        parseFloat(e.target.value)
-                      ] 
-                    })}
-                    placeholder="Z"
-                  />
-                </div>
               </ControlGroup>
             )}
           </Section>
