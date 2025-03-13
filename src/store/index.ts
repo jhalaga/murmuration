@@ -104,7 +104,7 @@ const PRESET_CONFIGS = {
   'Windy Day': {
     ...DEFAULT_PARAMS,
     windFactor: 0.3,
-    windDirection: [1, 0.5, 0],
+    windDirection: [1, 0.5, 0] as [number, number, number],
   },
 };
 

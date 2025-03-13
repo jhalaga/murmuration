@@ -34,22 +34,67 @@ export const textToPoints = (
   const imageData = context.getImageData(0, 0, width, height);
   const data = imageData.data;
 
+  // Find text boundaries
+  let minX = width;
+  let maxX = 0;
+  let minY = height;
+  let maxY = 0;
+
+  // First pass: find the boundaries of the text
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = (y * width + x) * 4;
+      if (data[index] > 200) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+
+  // Add padding
+  const padding = 10;
+  minX = Math.max(0, minX - padding);
+  maxX = Math.min(width, maxX + padding);
+  minY = Math.max(0, minY - padding);
+  maxY = Math.min(height, maxY + padding);
+
+  // Calculate text dimensions
+  const textWidth = maxX - minX;
+  const textHeight = maxY - minY;
+
   // Sample points from the text
   const points: Vector3D[] = [];
   const step = Math.max(1, Math.floor(4 / params.formationDensity)); // Adjust sampling density
 
-  for (let y = 0; y < height; y += step) {
-    for (let x = 0; x < width; x += step) {
+  // Second pass: sample points within the boundaries
+  for (let y = minY; y <= maxY; y += step) {
+    for (let x = minX; x <= maxX; x += step) {
       const index = (y * width + x) * 4;
       // Check if pixel is white (part of the text)
       if (data[index] > 200) {
-        // Convert to normalized coordinates (-1 to 1)
-        const xPos = (x / width) * 2 - 1;
-        const yPos = -((y / height) * 2 - 1); // Flip Y axis
+        // Convert to normalized coordinates relative to text boundaries
+        const xPos = ((x - minX) / textWidth) * 2 - 1;
+        const yPos = -((y - minY) / textHeight) * 2 + 1; // Flip Y axis
         
         // Scale to fit within the boundary
         const scaleFactor = 0.8; // Adjust to fit within boundary
-        points.push([xPos * 100 * scaleFactor, yPos * 50 * scaleFactor, 0]);
+        const aspectRatio = textWidth / textHeight;
+        
+        // Adjust scale based on aspect ratio to maintain proportions
+        let xScale = 100 * scaleFactor;
+        let yScale = 50 * scaleFactor;
+        
+        if (aspectRatio > 1) {
+          // Wide text
+          yScale = yScale * (1 / aspectRatio);
+        } else {
+          // Tall text
+          xScale = xScale * aspectRatio;
+        }
+        
+        points.push([xPos * xScale, yPos * yScale, 0]);
         
         // Limit the number of points
         if (points.length >= maxPoints) {
@@ -57,6 +102,11 @@ export const textToPoints = (
         }
       }
     }
+  }
+
+  // If we don't have enough points, try with a smaller step
+  if (points.length < maxPoints / 2 && step > 1) {
+    return textToPoints(text, { ...params, formationDensity: params.formationDensity * 1.5 }, maxPoints);
   }
 
   return points;

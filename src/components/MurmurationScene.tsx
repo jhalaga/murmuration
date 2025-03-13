@@ -1,9 +1,9 @@
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Bird } from '../models/Bird';
 import { useStore } from '../store';
-import { randomVectorInSphere, toThreeVector } from '../utils/vector';
-import { textToPoints, symbolToPoints, assignTargetPoints } from '../utils/textToPoints';
+import { randomVectorInSphere } from '../utils/vector';
+import { textToPoints, assignTargetPoints } from '../utils/textToPoints';
 import BirdMesh from './BirdMesh';
 import TrailEffect from './TrailEffect';
 
@@ -15,50 +15,76 @@ const MurmurationScene: React.FC = () => {
     isPaused 
   } = useStore();
   
-  // Ref to store the birds
+  // State to store birds
+  const [birds, setBirds] = useState<Bird[]>([]);
+  
+  // Ref to store the birds for animation frame updates
   const birdsRef = useRef<Bird[]>([]);
   
-  // Ref to track if we need to regenerate birds
-  const birdCountRef = useRef(params.birdCount);
+  // Ref to track parameter changes
+  const paramsRef = useRef(params);
   
-  // Ref to track if we need to regenerate text points
-  const textRef = useRef(textParams.text);
-  const textModeRef = useRef(isTextMode);
+  // State to force re-rendering trails when needed
+  const [trailKey, setTrailKey] = useState(0);
   
-  // Generate birds
-  const birds = useMemo(() => {
+  // Generate birds when count changes
+  useEffect(() => {
     const newBirds: Bird[] = [];
     
-    for (let i = 0; i < params.birdCount; i++) {
-      newBirds.push(
-        new Bird({
-          position: randomVectorInSphere(params.boundaryRadius * 0.8),
-          size: params.birdSize,
-          id: i,
-        })
-      );
+    // Keep existing birds if we're just adding more
+    if (birds.length < params.birdCount) {
+      newBirds.push(...birds);
+      
+      // Add new birds
+      for (let i = birds.length; i < params.birdCount; i++) {
+        newBirds.push(
+          new Bird({
+            position: randomVectorInSphere(params.boundaryRadius * 0.8),
+            size: params.birdSize,
+            id: i,
+          })
+        );
+      }
+    } else {
+      // If reducing birds, keep only the first n birds
+      for (let i = 0; i < params.birdCount; i++) {
+        if (i < birds.length) {
+          newBirds.push(birds[i]);
+        } else {
+          newBirds.push(
+            new Bird({
+              position: randomVectorInSphere(params.boundaryRadius * 0.8),
+              size: params.birdSize,
+              id: i,
+            })
+          );
+        }
+      }
     }
     
-    return newBirds;
-  }, [params.birdCount]); // Regenerate when bird count changes
-  
-  // Update birds ref when birds array changes
-  useEffect(() => {
-    birdsRef.current = birds;
-    birdCountRef.current = params.birdCount;
-  }, [birds, params.birdCount]);
+    // Clear trails when bird count changes
+    newBirds.forEach(bird => {
+      bird.trail = [];
+    });
+    
+    setBirds(newBirds);
+    birdsRef.current = newBirds;
+    
+    // Force trail re-rendering
+    setTrailKey(prev => prev + 1);
+  }, [params.birdCount]);
   
   // Handle text mode changes
   useEffect(() => {
-    if (isTextMode && (textRef.current !== textParams.text || !textModeRef.current)) {
+    if (!birdsRef.current.length) return;
+    
+    if (isTextMode) {
       // Generate points from text
-      const points = textToPoints(textParams.text, textParams, params.birdCount);
+      const points = textToPoints(textParams.text, textParams, birdsRef.current.length);
       
       // Assign points to birds
       assignTargetPoints(birdsRef.current, points);
-      
-      textRef.current = textParams.text;
-    } else if (!isTextMode && textModeRef.current) {
+    } else {
       // Clear target points when exiting text mode
       birdsRef.current.forEach(bird => {
         bird.targetPoint = null;
@@ -66,12 +92,88 @@ const MurmurationScene: React.FC = () => {
       });
     }
     
-    textModeRef.current = isTextMode;
-  }, [isTextMode, textParams, params.birdCount]);
+    // Clear trails when switching modes
+    birdsRef.current.forEach(bird => {
+      bird.trail = [];
+    });
+    
+    // Force trail re-rendering
+    setTrailKey(prev => prev + 1);
+  }, [isTextMode]);
+  
+  // Update text formation parameters
+  useEffect(() => {
+    if (isTextMode && birdsRef.current.length > 0) {
+      // Regenerate points when text parameters change
+      const points = textToPoints(textParams.text, textParams, birdsRef.current.length);
+      assignTargetPoints(birdsRef.current, points);
+      
+      // Clear trails when text parameters change
+      birdsRef.current.forEach(bird => {
+        bird.trail = [];
+      });
+      
+      // Force trail re-rendering
+      setTrailKey(prev => prev + 1);
+    }
+  }, [textParams.text, textParams.fontSize, textParams.formationDensity, isTextMode]);
+  
+  // Update when simulation parameters change
+  useEffect(() => {
+    // Store current parameters for comparison
+    paramsRef.current = params;
+    
+    // If in text mode, regenerate points when boundary radius changes
+    if (isTextMode && birdsRef.current.length > 0) {
+      const points = textToPoints(textParams.text, textParams, birdsRef.current.length);
+      assignTargetPoints(birdsRef.current, points);
+    }
+    
+    // Clear trails when parameters change
+    birdsRef.current.forEach(bird => {
+      bird.trail = [];
+    });
+    
+    // Force trail re-rendering
+    setTrailKey(prev => prev + 1);
+  }, [
+    params.speed, 
+    params.cohesionFactor, 
+    params.alignmentFactor, 
+    params.separationFactor, 
+    params.perceptionRadius, 
+    params.boundaryRadius,
+    params.windFactor,
+    params.windDirection
+  ]);
+  
+  // Handle bird size changes separately - this is critical for trail rendering
+  useEffect(() => {
+    // Clear trails when bird size changes
+    birdsRef.current.forEach(bird => {
+      bird.trail = [];
+    });
+    
+    // Force trail re-rendering with a new key
+    setTrailKey(Date.now()); // Use timestamp for guaranteed uniqueness
+  }, [params.birdSize]);
+  
+  // Handle trail visibility changes
+  useEffect(() => {
+    if (!params.showTrails) {
+      // Clear trails when turning off trails
+      birdsRef.current.forEach(bird => {
+        bird.trail = [];
+      });
+    }
+    
+    // Force trail re-rendering
+    setTrailKey(prev => prev + 1);
+  }, [params.showTrails, params.trailLength]);
   
   // Animation loop
   useFrame(() => {
-    if (isPaused) return;
+    if (isPaused || !birdsRef.current.length) return;
     
     // Update each bird
     birdsRef.current.forEach(bird => {
@@ -79,14 +181,19 @@ const MurmurationScene: React.FC = () => {
     });
   });
   
+  if (birds.length === 0) return null;
+  
   return (
     <>
       {/* Render each bird */}
       {birds.map((bird) => (
-        <React.Fragment key={bird.id}>
+        <React.Fragment key={`bird-${bird.id}-${trailKey}`}>
           <BirdMesh bird={bird} />
-          {params.showTrails && bird.trail.length > 0 && (
-            <TrailEffect points={bird.trail} />
+          {params.showTrails && bird.trail.length > 2 && (
+            <TrailEffect 
+              points={bird.trail} 
+              birdId={bird.id} 
+            />
           )}
         </React.Fragment>
       ))}

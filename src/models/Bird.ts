@@ -1,5 +1,5 @@
 import { Vector3D, add, subtract, multiply, divide, normalize, limit, distance, magnitude, randomVectorInSphere } from '../utils/vector';
-import { SimulationParams } from '../store';
+import { SimulationParams, TextModeParams } from '../store';
 
 export interface BirdOptions {
   position?: Vector3D;
@@ -23,6 +23,8 @@ export class Bird {
   trail: Vector3D[];
   targetPoint: Vector3D | null = null;
   formationWeight: number = 0;
+  lastParams: SimulationParams | null = null;
+  trailUpdateCounter: number = 0;
 
   constructor(options: BirdOptions) {
     this.position = options.position || [0, 0, 0];
@@ -31,6 +33,8 @@ export class Bird {
     this.size = options.size || 1;
     this.id = options.id;
     this.trail = [];
+    this.lastParams = null;
+    this.trailUpdateCounter = 0;
   }
 
   // Apply a force to the bird
@@ -203,8 +207,35 @@ export class Bird {
     return multiply(steer, this.formationWeight);
   }
 
+  // Check if parameters have changed
+  haveParamsChanged(params: SimulationParams): boolean {
+    if (!this.lastParams) return true;
+    
+    // Bird size changes should always trigger a trail reset
+    if (this.lastParams.birdSize !== params.birdSize) {
+      return true;
+    }
+    
+    return (
+      this.lastParams.speed !== params.speed ||
+      this.lastParams.cohesionFactor !== params.cohesionFactor ||
+      this.lastParams.alignmentFactor !== params.alignmentFactor ||
+      this.lastParams.separationFactor !== params.separationFactor ||
+      this.lastParams.perceptionRadius !== params.perceptionRadius ||
+      this.lastParams.boundaryRadius !== params.boundaryRadius ||
+      this.lastParams.windFactor !== params.windFactor ||
+      this.lastParams.trailLength !== params.trailLength
+    );
+  }
+
   // Update the bird's position and velocity
-  update(birds: Bird[], params: SimulationParams, isTextMode: boolean, textParams: any): void {
+  update(birds: Bird[], params: SimulationParams, isTextMode: boolean, textParams: TextModeParams): void {
+    // Check if parameters have changed
+    const paramsChanged = this.haveParamsChanged(params);
+    
+    // Bird size changes should always clear trails
+    const birdSizeChanged = this.lastParams && this.lastParams.birdSize !== params.birdSize;
+    
     // Calculate flocking forces
     const separation = this.separate(birds, params);
     const alignment = this.align(birds, params);
@@ -250,12 +281,28 @@ export class Bird {
     
     // Update trail
     if (params.showTrails) {
-      this.trail.push([...this.position]);
-      if (this.trail.length > params.trailLength) {
-        this.trail.shift();
+      // Clear trail if parameters changed or bird size specifically changed
+      if (paramsChanged || birdSizeChanged) {
+        this.trail = [];
+        this.trailUpdateCounter = 0;
       }
-    } else {
+      
+      // Only update trail every few frames for better performance
+      this.trailUpdateCounter++;
+      if (this.trailUpdateCounter >= 2) {
+        this.trail.push([...this.position]);
+        this.trailUpdateCounter = 0;
+        
+        // Limit trail length
+        while (this.trail.length > params.trailLength) {
+          this.trail.shift();
+        }
+      }
+    } else if (this.trail.length > 0) {
       this.trail = [];
     }
+    
+    // Store current parameters for next comparison
+    this.lastParams = { ...params };
   }
 } 
