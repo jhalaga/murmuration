@@ -1,0 +1,179 @@
+import * as THREE from 'three';
+import { Vector3D } from './vector';
+import { TextModeParams } from '../store';
+
+// Generate points along the path of text
+export const textToPoints = (
+  text: string,
+  params: TextModeParams,
+  maxPoints: number
+): Vector3D[] => {
+  // Create a canvas to draw the text
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  if (!context) return [];
+
+  // Set canvas size
+  const width = 1024;
+  const height = 512;
+  canvas.width = width;
+  canvas.height = height;
+
+  // Clear canvas
+  context.fillStyle = 'black';
+  context.fillRect(0, 0, width, height);
+
+  // Draw text
+  context.fillStyle = 'white';
+  context.font = `${params.fontWeight} ${params.fontSize * 10}px Arial`;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(text, width / 2, height / 2);
+
+  // Get image data
+  const imageData = context.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  // Sample points from the text
+  const points: Vector3D[] = [];
+  const step = Math.max(1, Math.floor(4 / params.formationDensity)); // Adjust sampling density
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const index = (y * width + x) * 4;
+      // Check if pixel is white (part of the text)
+      if (data[index] > 200) {
+        // Convert to normalized coordinates (-1 to 1)
+        const xPos = (x / width) * 2 - 1;
+        const yPos = -((y / height) * 2 - 1); // Flip Y axis
+        
+        // Scale to fit within the boundary
+        const scaleFactor = 0.8; // Adjust to fit within boundary
+        points.push([xPos * 100 * scaleFactor, yPos * 50 * scaleFactor, 0]);
+        
+        // Limit the number of points
+        if (points.length >= maxPoints) {
+          return points;
+        }
+      }
+    }
+  }
+
+  return points;
+};
+
+// Generate points for a simple symbol
+export const symbolToPoints = (
+  symbol: string,
+  maxPoints: number
+): Vector3D[] => {
+  let points: Vector3D[] = [];
+  
+  switch (symbol) {
+    case 'circle':
+      points = generateCirclePoints(maxPoints);
+      break;
+    case 'heart':
+      points = generateHeartPoints(maxPoints);
+      break;
+    case 'star':
+      points = generateStarPoints(maxPoints);
+      break;
+    default:
+      // Default to a simple shape if symbol not recognized
+      points = generateCirclePoints(maxPoints);
+  }
+  
+  return points;
+};
+
+// Generate points for a circle
+const generateCirclePoints = (numPoints: number): Vector3D[] => {
+  const points: Vector3D[] = [];
+  const radius = 80;
+  
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (i / numPoints) * Math.PI * 2;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    points.push([x, y, 0]);
+  }
+  
+  return points;
+};
+
+// Generate points for a heart shape
+const generateHeartPoints = (numPoints: number): Vector3D[] => {
+  const points: Vector3D[] = [];
+  const scale = 8;
+  
+  for (let i = 0; i < numPoints; i++) {
+    const t = (i / numPoints) * Math.PI * 2;
+    // Heart curve formula
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    points.push([x * scale, y * scale, 0]);
+  }
+  
+  return points;
+};
+
+// Generate points for a star
+const generateStarPoints = (numPoints: number): Vector3D[] => {
+  const points: Vector3D[] = [];
+  const outerRadius = 80;
+  const innerRadius = 40;
+  const spikes = 5;
+  const pointsPerSpike = Math.floor(numPoints / (spikes * 2));
+  
+  for (let i = 0; i < spikes * 2; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (i / (spikes * 2)) * Math.PI * 2;
+    
+    // Create points along the line from the previous point to this one
+    const prevRadius = i === 0 ? innerRadius : (i % 2 === 0 ? outerRadius : innerRadius);
+    const prevAngle = ((i - 1) / (spikes * 2)) * Math.PI * 2;
+    
+    const startX = Math.cos(prevAngle) * prevRadius;
+    const startY = Math.sin(prevAngle) * prevRadius;
+    const endX = Math.cos(angle) * radius;
+    const endY = Math.sin(angle) * radius;
+    
+    for (let j = 0; j < pointsPerSpike; j++) {
+      const t = j / pointsPerSpike;
+      const x = startX + (endX - startX) * t;
+      const y = startY + (endY - startY) * t;
+      points.push([x, y, 0]);
+    }
+  }
+  
+  return points;
+};
+
+// Assign target points to birds
+export const assignTargetPoints = (
+  birds: any[],
+  points: Vector3D[]
+): void => {
+  // If we have more birds than points, some birds won't get a target
+  const numAssignments = Math.min(birds.length, points.length);
+  
+  // Create a copy of the points array to shuffle
+  const shuffledPoints = [...points];
+  
+  // Fisher-Yates shuffle algorithm
+  for (let i = shuffledPoints.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledPoints[i], shuffledPoints[j]] = [shuffledPoints[j], shuffledPoints[i]];
+  }
+  
+  // Assign points to birds
+  for (let i = 0; i < numAssignments; i++) {
+    birds[i].targetPoint = shuffledPoints[i];
+  }
+  
+  // Clear target points for remaining birds
+  for (let i = numAssignments; i < birds.length; i++) {
+    birds[i].targetPoint = null;
+  }
+}; 
