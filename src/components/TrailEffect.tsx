@@ -108,9 +108,9 @@ const TrailEffect: React.FC<TrailEffectProps> = ({ points, birdId }) => {
     if (context) {
       // Create gradient
       const gradient = context.createLinearGradient(0, 0, 256, 0);
-      gradient.addColorStop(0, 'rgba(233, 69, 96, 0)'); // Start transparent
-      gradient.addColorStop(0.5, 'rgba(233, 69, 96, 0.3)'); // Middle semi-transparent
-      gradient.addColorStop(1, 'rgba(233, 69, 96, 0.7)'); // End opaque
+      gradient.addColorStop(0, 'rgba(142, 111, 62, 0)'); // Start transparent (sterling brown)
+      gradient.addColorStop(0.5, 'rgba(142, 111, 62, 0.3)'); // Middle semi-transparent
+      gradient.addColorStop(1, 'rgba(142, 111, 62, 0.7)'); // End opaque
       
       context.fillStyle = gradient;
       context.fillRect(0, 0, 256, 1);

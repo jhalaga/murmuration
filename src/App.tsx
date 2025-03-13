@@ -43,7 +43,7 @@ const App: React.FC = () => {
             camera={{ position: [0, 0, 100], fov: 75 }}
             dpr={[1, 2]}
           >
-            <color attach="background" args={['#121212']} />
+            <color attach="background" args={['#87CEEB']} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             <MurmurationScene />

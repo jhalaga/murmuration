@@ -52,7 +52,7 @@ const BirdMesh: React.FC<BirdMeshProps> = ({ bird }) => {
   // Create a material with a color based on the bird's formation weight
   const material = useMemo(() => {
     return new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#e94560'),
+      color: new THREE.Color('#8E6F3E'),
       emissive: new THREE.Color('#16213e'),
       metalness: 0.2,
       roughness: 0.8,
@@ -84,7 +84,7 @@ const BirdMesh: React.FC<BirdMeshProps> = ({ bird }) => {
     // Update color based on formation weight
     if (material.color instanceof THREE.Color) {
       // Interpolate between normal color and formation color
-      const normalColor = new THREE.Color('#e94560');
+      const normalColor = new THREE.Color('#8E6F3E');
       const formationColor = new THREE.Color('#4caf50');
       
       material.color.copy(normalColor).lerp(formationColor, bird.formationWeight);
