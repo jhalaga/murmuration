@@ -473,7 +473,7 @@ const ControlPanel: React.FC = () => {
               <Slider 
                 type="range" 
                 min="-100" 
-                max="0" 
+                max="100" 
                 step="5"
                 value={params.horizonHeight}
                 onChange={(e) => updateParams({ horizonHeight: parseInt(e.target.value) })}

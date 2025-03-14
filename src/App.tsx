@@ -57,7 +57,7 @@ const StabilizedControls = () => {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
   const { params } = useStore();
-  const cameraPositionRef = useRef(new THREE.Vector3(0, 0, 100));
+  const cameraPositionRef = useRef(new THREE.Vector3(0, 0, 180));
   
   // Update min distance based on the parameter
   useEffect(() => {
@@ -99,7 +99,7 @@ const StabilizedControls = () => {
       ref={controlsRef}
       enablePan={false}
       enableZoom={true}
-      maxDistance={200}
+      maxDistance={300}
       minDistance={params.minCameraDistance - 10}
       dampingFactor={0.2}
       enableDamping={true}
@@ -141,7 +141,7 @@ const App: React.FC = () => {
       <MainContent>
         <CanvasContainer backgroundType={backgroundType} backgroundImage={backgroundImage}>
           <Canvas
-            camera={{ position: [0, 0, 100], fov: 75 }}
+            camera={{ position: [0, 0, 180], fov: 75 }}
             dpr={[1, 2]}
             style={{ position: 'relative', zIndex: 1 }}
             gl={{ alpha: true, antialias: true }}

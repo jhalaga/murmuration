@@ -75,11 +75,7 @@ Murmuration is an interactive application that simulates the flocking behavior o
 
 ## Future Expansion Possibilities
 - 3D rendering mode
-- VR/AR compatibility
-- Multi-user shared experiences
-- AI-driven murmurations
 - Integration with music/audio input
-- Physical installation mode for galleries or public spaces
 
 ## Technical Requirements
 - Modern web browser with WebGL support

@@ -73,7 +73,7 @@ const DEFAULT_PARAMS: SimulationParams = {
   birdSize: 0.6,
   showTrails: false,
   trailLength: 20,
-  boundaryRadius: 130,
+  boundaryRadius: 160,
   windFactor: 0,
   windDirection: [0, 0, 0],
   horizonHeight: -20, // Default horizon height (negative value for below the center)
@@ -127,7 +127,8 @@ const PRESET_CONFIGS = {
     alignmentFactor: 0.3,
     separationFactor: 1.5,
     birdCount: 400,
-    minCameraDistance: 60,
+    minCameraDistance: 80,
+    boundaryRadius: 180,
   },
 };
 
