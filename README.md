@@ -12,7 +12,7 @@ Murmuration is an interactive web application that simulates the mesmerizing flo
 - **Customizable Parameters**: Control flock size, speed, cohesion, alignment, and separation
 - **Text & Symbol Formation**: Watch as birds transition from natural flocking to form text or symbols
 - **High Performance**: Optimized rendering for smooth animation even with thousands of birds
-- **Beautiful Visuals**: Stunning visual effects with trails, dynamic lighting, and customizable appearance
+- **Beautiful Visuals**: Stunning visual effects with customizable appearance
 
 ## Project Structure
 

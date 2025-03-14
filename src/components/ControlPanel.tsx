@@ -353,16 +353,20 @@ const ControlPanel: React.FC = () => {
             <ControlGroup>
               <Label>
                 Speed
-                <Value>{params.speed.toFixed(1)}</Value>
+                <Value>{params.speed.toFixed(2)}</Value>
               </Label>
               <Slider 
                 type="range" 
-                min="0.1" 
-                max="3.0" 
-                step="0.1"
+                min="0.01" 
+                max="1.0" 
+                step="0.01"
                 value={params.speed}
                 onChange={(e) => updateParams({ speed: parseFloat(e.target.value) })}
               />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', marginTop: '-0.25rem' }}>
+                <span>Slow</span>
+                <span>Fast</span>
+              </div>
             </ControlGroup>
             
             <ControlGroup>
@@ -659,6 +663,36 @@ const ControlPanel: React.FC = () => {
           
           <ControlGroup>
             <Label>
+              Position X (Horizontal)
+              <Value>{textParams.positionX}</Value>
+            </Label>
+            <Slider 
+              type="range" 
+              min="-100" 
+              max="100" 
+              step="5"
+              value={textParams.positionX}
+              onChange={(e) => updateTextParams({ positionX: parseInt(e.target.value) })}
+            />
+          </ControlGroup>
+          
+          <ControlGroup>
+            <Label>
+              Position Y (Vertical)
+              <Value>{textParams.positionY}</Value>
+            </Label>
+            <Slider 
+              type="range" 
+              min="-100" 
+              max="100" 
+              step="5"
+              value={textParams.positionY}
+              onChange={(e) => updateTextParams({ positionY: parseInt(e.target.value) })}
+            />
+          </ControlGroup>
+          
+          <ControlGroup>
+            <Label>
               <Checkbox 
                 type="checkbox" 
                 checked={textParams.maintainFormation}
@@ -676,6 +710,8 @@ const ControlPanel: React.FC = () => {
               transitionSpeed: 0.02,
               formationDensity: 0.8,
               maintainFormation: true,
+              positionX: 0,
+              positionY: 20,
             })}
           >
             Reset Text Settings

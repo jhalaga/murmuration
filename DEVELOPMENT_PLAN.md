@@ -48,7 +48,6 @@ Total estimated timeline: 14 weeks
 
 #### Week 5: Visual Enhancement
 - [ ] Improve bird visuals with better sprites/models
-- [ ] Add motion blur or trails
 - [ ] Implement camera controls
 - [ ] Add background and environmental elements
 - [ ] Create first demo with basic murmuration

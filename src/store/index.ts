@@ -26,6 +26,8 @@ export interface TextModeParams {
   transitionSpeed: number;
   formationDensity: number;
   maintainFormation: boolean;
+  positionX: number; // Horizontal positioning of text formation
+  positionY: number; // Vertical positioning of text formation
 }
 
 interface StoreState {
@@ -62,14 +64,14 @@ interface StoreState {
 const DEFAULT_PARAMS: SimulationParams = {
   birdCount: 500,
   speed: 0.2,
-  cohesionFactor: 0.3,
+  cohesionFactor: 0.6,
   alignmentFactor: 0.4,
   separationFactor: 2.0,
   perceptionRadius: 13,
   maxForce: 0.2,
   maxSpeed: 3.0,
-  birdSize: 0.4,
-  showTrails: true,
+  birdSize: 0.6,
+  showTrails: false,
   trailLength: 20,
   boundaryRadius: 130,
   windFactor: 0,
@@ -85,6 +87,8 @@ const DEFAULT_TEXT_PARAMS: TextModeParams = {
   transitionSpeed: 0.02,
   formationDensity: 1.0,
   maintainFormation: true,
+  positionX: -35, // Center horizontally by default
+  positionY: 45, // Position slightly above center by default
 };
 
 const PRESET_CONFIGS = {

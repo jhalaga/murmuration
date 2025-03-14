@@ -67,56 +67,110 @@ export const textToPoints = (
   // Sample points from the text
   const points: Vector3D[] = [];
   const step = Math.max(1, Math.floor(4 / params.formationDensity));
+  
+  // Create a more even distribution of points
+  // First, collect all valid white pixel points
+  const allTextPoints: Array<[number, number]> = [];
 
-  // Second pass: sample points within the boundaries
   for (let y = minY; y <= maxY; y += step) {
     for (let x = minX; x <= maxX; x += step) {
       const index = (y * width + x) * 4;
       // Check if pixel is white (part of the text)
       if (data[index] > 200) {
-        // Convert to normalized coordinates relative to text boundaries
-        const xPos = ((x - minX) / textWidth) * 2 - 1;
-        const yPos = -((y - minY) / textHeight) * 2 + 1; // Flip Y axis
-        
-        // Scale to fit within the boundary
-        // Adjust base scale factor based on font size
-        const baseFactor = 0.8;
-        // Scale factor adjustment for larger fonts
-        const fontSizeAdjustment = Math.max(1, 5 / params.fontSize);
-        // Apply the adjusted scale factor
-        const scaleFactor = baseFactor * fontSizeAdjustment;
-        
-        const aspectRatio = textWidth / textHeight;
-        
-        // Adjust scale based on aspect ratio to maintain proportions
-        // Use a more balanced approach to scaling
-        let xScale = 100 * scaleFactor;
-        let yScale = 50 * scaleFactor * 1.2; // Increase vertical scale by 20%
-        
-        if (aspectRatio > 1) {
-          // Wide text
-          yScale = yScale * (1 / Math.sqrt(aspectRatio));
-        } else {
-          // Tall text
-          xScale = xScale * Math.sqrt(aspectRatio);
-        }
-        
-        points.push([xPos * xScale, yPos * yScale, 0]);
-        
-        // Limit the number of points
-        if (points.length >= maxPoints) {
-          return points;
-        }
+        allTextPoints.push([x, y]);
       }
+    }
+  }
+  
+  // If we have more points than needed, sample them evenly
+  if (allTextPoints.length > maxPoints) {
+    // Ensure we get a balanced representation by taking evenly spaced samples
+    const samplingInterval = allTextPoints.length / maxPoints;
+    for (let i = 0; i < maxPoints && i < allTextPoints.length; i++) {
+      const pointIndex = Math.min(Math.floor(i * samplingInterval), allTextPoints.length - 1);
+      const [x, y] = allTextPoints[pointIndex];
+      
+      // Convert to normalized coordinates
+      const xPos = ((x - minX) / textWidth) * 2 - 1;
+      const yPos = -((y - minY) / textHeight) * 2 + 1; // Flip Y axis
+      
+      // Scale to fit within the boundary
+      // Adjust base scale factor based on font size
+      const baseFactor = 0.8;
+      // Scale factor adjustment for larger fonts
+      const fontSizeAdjustment = Math.max(1, 5 / params.fontSize);
+      // Apply the adjusted scale factor
+      const scaleFactor = baseFactor * fontSizeAdjustment;
+      
+      const aspectRatio = textWidth / textHeight;
+      
+      // Adjust scale based on aspect ratio to maintain proportions
+      let xScale = 100 * scaleFactor;
+      let yScale = 50 * scaleFactor * 1.2; // Increase vertical scale by 20%
+      
+      if (aspectRatio > 1) {
+        // Wide text
+        yScale = yScale * (1 / Math.sqrt(aspectRatio));
+      } else {
+        // Tall text
+        xScale = xScale * Math.sqrt(aspectRatio);
+      }
+      
+      points.push([xPos * xScale, yPos * yScale, 0]);
+    }
+  } else {
+    // Not enough points, use all of them
+    for (const [x, y] of allTextPoints) {
+      // Convert to normalized coordinates
+      const xPos = ((x - minX) / textWidth) * 2 - 1;
+      const yPos = -((y - minY) / textHeight) * 2 + 1; // Flip Y axis
+      
+      // Scale to fit within the boundary
+      // Adjust base scale factor based on font size
+      const baseFactor = 0.8;
+      // Scale factor adjustment for larger fonts
+      const fontSizeAdjustment = Math.max(1, 5 / params.fontSize);
+      // Apply the adjusted scale factor
+      const scaleFactor = baseFactor * fontSizeAdjustment;
+      
+      const aspectRatio = textWidth / textHeight;
+      
+      // Adjust scale based on aspect ratio to maintain proportions
+      let xScale = 100 * scaleFactor;
+      let yScale = 50 * scaleFactor * 1.2; // Increase vertical scale by 20%
+      
+      if (aspectRatio > 1) {
+        // Wide text
+        yScale = yScale * (1 / Math.sqrt(aspectRatio));
+      } else {
+        // Tall text
+        xScale = xScale * Math.sqrt(aspectRatio);
+      }
+      
+      points.push([xPos * xScale, yPos * yScale, 0]);
     }
   }
 
   // If we don't have enough points, try with a smaller step
   if (points.length < maxPoints / 2 && step > 1) {
-    return textToPoints(text, { ...params, formationDensity: params.formationDensity * 1.5 }, maxPoints);
+    // Make sure we preserve all parameters, including position values
+    const adjustedParams = { 
+      ...params,
+      formationDensity: params.formationDensity * 1.5
+    };
+    return textToPoints(text, adjustedParams, maxPoints);
   }
 
-  return points;
+  // Apply position offsets to all points
+  const offsetPoints = points.map(point => {
+    return [
+      point[0] + params.positionX, 
+      point[1] + params.positionY, 
+      point[2]
+    ] as Vector3D;
+  });
+
+  return offsetPoints;
 };
 
 // Generate points for a simple symbol

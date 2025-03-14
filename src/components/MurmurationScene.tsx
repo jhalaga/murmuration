@@ -116,7 +116,14 @@ const MurmurationScene: React.FC = () => {
       // Force trail re-rendering
       setTrailKey(prev => prev + 1);
     }
-  }, [textParams.text, textParams.fontSize, textParams.formationDensity, isTextMode]);
+  }, [
+    textParams.text, 
+    textParams.fontSize, 
+    textParams.formationDensity, 
+    textParams.positionX, 
+    textParams.positionY,
+    isTextMode
+  ]);
   
   // Update when simulation parameters change
   useEffect(() => {

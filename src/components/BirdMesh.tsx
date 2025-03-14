@@ -80,21 +80,6 @@ const BirdMesh: React.FC<BirdMeshProps> = ({ bird }) => {
       bird.size * params.birdSize,
       bird.size * params.birdSize
     );
-    
-    // Update color based on formation weight
-    if (material.color instanceof THREE.Color) {
-      // Interpolate between normal color and formation color
-      const normalColor = new THREE.Color('#8E6F3E');
-      const formationColor = new THREE.Color('#4caf50');
-      
-      material.color.copy(normalColor).lerp(formationColor, bird.formationWeight);
-      
-      // Also adjust emissive intensity based on formation weight
-      const baseEmissive = new THREE.Color('#16213e');
-      const activeEmissive = new THREE.Color('#0f3460');
-      
-      material.emissive.copy(baseEmissive).lerp(activeEmissive, bird.formationWeight);
-    }
   });
   
   return (
