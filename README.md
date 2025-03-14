@@ -1,6 +1,6 @@
 # Murmuration
 
-![Murmuration Banner](https://via.placeholder.com/800x200?text=Murmuration+Simulation)
+![Murmuration Banner](./public/murmuration_1.jpg)
 
 ## Overview
 
