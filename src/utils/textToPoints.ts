@@ -24,7 +24,8 @@ export const textToPoints = (
 
   // Draw text
   context.fillStyle = 'white';
-  context.font = `${params.fontWeight} ${params.fontSize * 10}px Arial`;
+  const fontSize = params.fontSize * 10;
+  context.font = `${params.fontWeight} ${fontSize}px Arial`;
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   context.fillText(text, width / 2, height / 2);
@@ -65,7 +66,7 @@ export const textToPoints = (
 
   // Sample points from the text
   const points: Vector3D[] = [];
-  const step = Math.max(1, Math.floor(4 / params.formationDensity)); // Adjust sampling density
+  const step = Math.max(1, Math.floor(4 / params.formationDensity));
 
   // Second pass: sample points within the boundaries
   for (let y = minY; y <= maxY; y += step) {
@@ -78,19 +79,26 @@ export const textToPoints = (
         const yPos = -((y - minY) / textHeight) * 2 + 1; // Flip Y axis
         
         // Scale to fit within the boundary
-        const scaleFactor = 0.8; // Adjust to fit within boundary
+        // Adjust base scale factor based on font size
+        const baseFactor = 0.8;
+        // Scale factor adjustment for larger fonts
+        const fontSizeAdjustment = Math.max(1, 5 / params.fontSize);
+        // Apply the adjusted scale factor
+        const scaleFactor = baseFactor * fontSizeAdjustment;
+        
         const aspectRatio = textWidth / textHeight;
         
         // Adjust scale based on aspect ratio to maintain proportions
+        // Use a more balanced approach to scaling
         let xScale = 100 * scaleFactor;
-        let yScale = 50 * scaleFactor;
+        let yScale = 50 * scaleFactor * 1.2; // Increase vertical scale by 20%
         
         if (aspectRatio > 1) {
           // Wide text
-          yScale = yScale * (1 / aspectRatio);
+          yScale = yScale * (1 / Math.sqrt(aspectRatio));
         } else {
           // Tall text
-          xScale = xScale * aspectRatio;
+          xScale = xScale * Math.sqrt(aspectRatio);
         }
         
         points.push([xPos * xScale, yPos * yScale, 0]);

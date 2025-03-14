@@ -75,7 +75,7 @@ const DEFAULT_PARAMS: SimulationParams = {
   windFactor: 0,
   windDirection: [0, 0, 0],
   horizonHeight: -20, // Default horizon height (negative value for below the center)
-  minCameraDistance: 50, // Default minimum distance from camera
+  minCameraDistance: 30, // Reduced default minimum distance from camera to improve text formation
 };
 
 const DEFAULT_TEXT_PARAMS: TextModeParams = {
@@ -83,7 +83,7 @@ const DEFAULT_TEXT_PARAMS: TextModeParams = {
   fontSize: 5,
   fontWeight: 300,
   transitionSpeed: 0.02,
-  formationDensity: 0.8,
+  formationDensity: 1.0,
   maintainFormation: true,
 };
 

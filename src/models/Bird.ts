@@ -185,7 +185,9 @@ export class Bird {
       
       // Force strength is proportional to how much closer than the min distance
       const depthFactor = (params.minCameraDistance - distanceToCamera) / params.minCameraDistance;
-      const strength = Math.min(1.0, depthFactor) * params.maxForce * 2.0;
+      // Reduce the camera constraint force when in formation based on formationWeight
+      const formationReduction = Math.max(0, 1.0 - this.formationWeight * 0.8);
+      const strength = Math.min(1.0, depthFactor) * params.maxForce * 2.0 * formationReduction;
       
       return multiply(invertedDir, strength);
     }
@@ -229,20 +231,29 @@ export class Bird {
     // Calculate desired velocity (from current position to target)
     let desired = subtract(this.targetPoint, this.position);
     
-    // Scale the force based on distance to create a more natural flow
+    // Calculate distance to target
     const d = magnitude(desired);
     let speed = params.maxSpeed;
     
-    // Slow down as we approach the target
-    if (d < 5) {
+    // Increase force when further from target
+    if (d > 10) {
+      // Apply stronger force when far away
+      speed = params.maxSpeed * 1.5;
+    } else if (d < 5) {
+      // Apply gentler force when close to target
       speed = (d / 5) * params.maxSpeed;
     }
+    
+    // Is the target near the center? If so, increase the force for stability
+    const distanceToCenter = magnitude(this.targetPoint);
+    const centerFactor = distanceToCenter < 30 ? 1.5 : 1.0;
     
     desired = multiply(normalize(desired), speed);
     
     // Reynolds steering formula: steering = desired - velocity
     let steer = subtract(desired, this.velocity);
-    steer = limit(steer, params.maxForce * 1.5); // Slightly stronger force for formation
+    // Increase force multiplier for better formation
+    steer = limit(steer, params.maxForce * 2.0 * centerFactor);
     
     // Apply the formation weight (gradually increases during transition)
     return multiply(steer, this.formationWeight);
