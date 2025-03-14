@@ -106,23 +106,33 @@ Total estimated timeline: 14 weeks
 
 ### Phase 6: Testing & Deployment (2 weeks)
 #### Week 13: Testing
-- [ ] Perform cross-browser testing
-- [ ] Test on various devices and screen sizes
-- [ ] Conduct performance testing
-- [ ] User experience testing
-- [ ] Fix identified issues
+- [x] Perform cross-browser testing
+- [x] Test on various devices and screen sizes
+- [x] Conduct performance testing
+- [x] User experience testing
+- [x] Fix identified issues
 
 #### Week 14: Deployment
-- [ ] Prepare production build
-- [ ] Optimize assets
-- [ ] Create documentation
-- [ ] Deploy to hosting platform
-- [ ] Post-launch monitoring
+- [x] Prepare production build
+- [x] Optimize assets
+- [x] Create documentation
+- [x] Deploy to hosting platform (GitHub Pages)
+  - Set up gh-pages package for deployment
+  - Configure repository for GitHub Pages
+  - Implement automated deployment process using npm scripts
+- [x] Post-launch monitoring
+
+## Deployment Process
+The application is deployed to GitHub Pages using the following process:
+1. Code changes are committed to the main branch
+2. The `npm run deploy` script builds the application and pushes to the gh-pages branch
+3. GitHub automatically serves the content from this branch
+4. The live application is available at https://jhalaga.github.io/murmuration/
 
 ## Development Stack Recommendations
 
 ### Frontend
-- **Framework**: React.js or Vue.js for UI components
+- **Framework**: React.js with TypeScript
 - **Rendering**: Three.js with WebGL for 3D rendering or p5.js for 2D
 - **State Management**: Redux or Context API
 - **Styling**: Styled-components or SCSS
