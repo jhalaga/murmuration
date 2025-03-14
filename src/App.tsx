@@ -1,12 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, useTexture } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import MurmurationScene from './components/MurmurationScene';
 import ControlPanel from './components/ControlPanel';
 import Header from './components/Header';
 import { useStore } from './store';
 import * as THREE from 'three';
+
+interface BackgroundProps {
+  backgroundType: 'color' | 'image';
+  backgroundImage: string | null;
+}
 
 const AppContainer = styled.div`
   display: flex;
@@ -23,9 +28,28 @@ const MainContent = styled.main`
   overflow: hidden;
 `;
 
-const CanvasContainer = styled.div`
+const CanvasContainer = styled.div<BackgroundProps>`
   flex: 1;
   position: relative;
+  background-color: ${({ backgroundType }) => backgroundType === 'color' ? '#87CEEB' : 'transparent'};
+  
+  ${({ backgroundType, backgroundImage }) => 
+    backgroundType === 'image' && backgroundImage ? `
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url(${backgroundImage});
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 0;
+        filter: brightness(1.05);
+      }
+    ` : ''}
 `;
 
 // Stabilized camera controls component to prevent zoom jumps
@@ -54,7 +78,6 @@ const StabilizedControls = () => {
   // This restores the camera position if it's accidentally reset
   useEffect(() => {
     if (camera && controlsRef.current) {
-      
       // If the camera has moved significantly from its last known position, restore it
       if (camera.position.distanceTo(cameraPositionRef.current) > 10) {
         camera.position.copy(cameraPositionRef.current);
@@ -96,74 +119,6 @@ const HorizonLine = () => {
   );
 };
 
-// Custom background component for when an image is selected
-const BackgroundImage = ({ url }: { url: string }) => {
-  const texture = useTexture(url);
-  const { camera, viewport, size } = useThree();
-  
-  // Reference to track resize events
-  const sizeRef = useRef({ width: size.width, height: size.height });
-  
-  // Function to adjust texture to maintain aspect ratio and fill viewport
-  const adjustTextureToFitViewport = useCallback(() => {
-    if (!texture.image) return;
-    
-    // Get image aspect ratio
-    const imageAspect = texture.image.width / texture.image.height;
-    const viewportAspect = viewport.width / viewport.height;
-    
-    // Set texture to repeat properly
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    
-    // Scale texture based on aspect ratio comparison
-    if (viewportAspect > imageAspect) {
-      // Viewport is wider than image
-      const scale = viewportAspect / imageAspect;
-      texture.repeat.set(scale, 1);
-      texture.offset.set((1 - scale) / 2, 0);
-    } else {
-      // Viewport is taller than image
-      const scale = imageAspect / viewportAspect;
-      texture.repeat.set(1, scale);
-      texture.offset.set(0, (1 - scale) / 2);
-    }
-  }, [texture, viewport]);
-  
-  // Adjust texture when it loads
-  useEffect(() => {
-    if (texture && texture.image) {
-      adjustTextureToFitViewport();
-    }
-  }, [texture, adjustTextureToFitViewport]);
-  
-  // Handle window resize
-  useEffect(() => {
-    // Check if there was an actual resize
-    if (
-      Math.abs(sizeRef.current.width - size.width) > 0.01 ||
-      Math.abs(sizeRef.current.height - size.height) > 0.01
-    ) {
-      sizeRef.current = { width: size.width, height: size.height };
-      adjustTextureToFitViewport();
-    }
-  }, [size, adjustTextureToFitViewport]);
-  
-  // Calculate the plane size to fully cover viewport
-  const planeWidth = viewport.width * 1.5;
-  const planeHeight = viewport.height * 1.5;
-  
-  // Position the plane behind everything but within view
-  const distanceFromCamera = Math.abs(camera.position.z) * 0.9;
-  
-  return (
-    <mesh position={[0, 0, -distanceFromCamera]}>
-      <planeGeometry args={[planeWidth, planeHeight]} />
-      <meshBasicMaterial map={texture} depthTest={false} />
-    </mesh>
-  );
-};
-
 const App: React.FC = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const { backgroundType, backgroundImage } = useStore();
@@ -176,17 +131,13 @@ const App: React.FC = () => {
     <AppContainer>
       <Header togglePanel={togglePanel} isPanelOpen={isPanelOpen} />
       <MainContent>
-        <CanvasContainer>
+        <CanvasContainer backgroundType={backgroundType} backgroundImage={backgroundImage}>
           <Canvas
             camera={{ position: [0, 0, 100], fov: 75 }}
             dpr={[1, 2]}
+            style={{ position: 'relative', zIndex: 1 }}
+            gl={{ alpha: true, antialias: true }}
           >
-            {backgroundType === 'color' ? (
-              <color attach="background" args={['#87CEEB']} />
-            ) : null}
-            {backgroundType === 'image' && backgroundImage ? (
-              <BackgroundImage url={backgroundImage} />
-            ) : null}
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             <HorizonLine />
