@@ -481,6 +481,24 @@ const ControlPanel: React.FC = () => {
             
             <ControlGroup>
               <Label>
+                Camera Distance
+                <Value>{params.minCameraDistance}</Value>
+              </Label>
+              <Slider 
+                type="range" 
+                min="20" 
+                max="100" 
+                step="5"
+                value={params.minCameraDistance}
+                onChange={(e) => updateParams({ minCameraDistance: parseInt(e.target.value) })}
+              />
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '-0.25rem' }}>
+                Minimum distance birds should maintain from the camera
+              </div>
+            </ControlGroup>
+            
+            <ControlGroup>
+              <Label>
                 Wind Factor
                 <Value>{params.windFactor.toFixed(1)}</Value>
               </Label>

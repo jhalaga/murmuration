@@ -16,6 +16,7 @@ export interface SimulationParams {
   windFactor: number;
   windDirection: [number, number, number];
   horizonHeight: number; // Controls how low birds can fly
+  minCameraDistance: number; // Minimum distance birds should maintain from the camera
 }
 
 export interface TextModeParams {
@@ -60,26 +61,27 @@ interface StoreState {
 
 const DEFAULT_PARAMS: SimulationParams = {
   birdCount: 500,
-  speed: 1.0,
-  cohesionFactor: 1.0,
-  alignmentFactor: 1.0,
-  separationFactor: 1.5,
-  perceptionRadius: 25,
+  speed: 0.2,
+  cohesionFactor: 0.3,
+  alignmentFactor: 0.4,
+  separationFactor: 2.0,
+  perceptionRadius: 13,
   maxForce: 0.2,
   maxSpeed: 3.0,
-  birdSize: 0.5,
+  birdSize: 0.4,
   showTrails: true,
   trailLength: 20,
-  boundaryRadius: 150,
+  boundaryRadius: 130,
   windFactor: 0,
   windDirection: [0, 0, 0],
-  horizonHeight: -40, // Default horizon height (negative value for below the center)
+  horizonHeight: -20, // Default horizon height (negative value for below the center)
+  minCameraDistance: 50, // Default minimum distance from camera
 };
 
 const DEFAULT_TEXT_PARAMS: TextModeParams = {
   text: 'MURMURATION',
-  fontSize: 15,
-  fontWeight: 700,
+  fontSize: 5,
+  fontWeight: 300,
   transitionSpeed: 0.02,
   formationDensity: 0.8,
   maintainFormation: true,
@@ -90,29 +92,38 @@ const PRESET_CONFIGS = {
   'Dense Flock': {
     ...DEFAULT_PARAMS,
     birdCount: 1000,
-    cohesionFactor: 1.5,
-    alignmentFactor: 1.2,
-    separationFactor: 1.0,
-    perceptionRadius: 20,
+    cohesionFactor: 0.5,
+    alignmentFactor: 0.6,
+    separationFactor: 1.5,
+    perceptionRadius: 15,
   },
   'Scattered': {
     ...DEFAULT_PARAMS,
     birdCount: 300,
-    cohesionFactor: 0.5,
-    alignmentFactor: 0.8,
-    separationFactor: 2.0,
-    perceptionRadius: 15,
+    cohesionFactor: 0.2,
+    alignmentFactor: 0.3,
+    separationFactor: 2.5,
+    perceptionRadius: 10,
   },
   'Fast': {
     ...DEFAULT_PARAMS,
-    speed: 1.5,
-    maxSpeed: 4.5,
+    speed: 0.8,
+    maxSpeed: 4.0,
     trailLength: 30,
   },
   'Windy Day': {
     ...DEFAULT_PARAMS,
     windFactor: 0.3,
     windDirection: [1, 0.5, 0] as [number, number, number],
+  },
+  'Calm': {
+    ...DEFAULT_PARAMS,
+    speed: 0.3,
+    cohesionFactor: 0.2,
+    alignmentFactor: 0.3,
+    separationFactor: 1.5,
+    birdCount: 400,
+    minCameraDistance: 60,
   },
 };
 

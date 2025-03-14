@@ -163,6 +163,35 @@ export class Bird {
     return [0, 0, 0];
   }
 
+  // Calculate camera distance constraint force
+  cameraDistanceConstraint(params: SimulationParams): Vector3D {
+    // The camera is assumed to be at [0,0,0] looking toward +z
+    // Calculate vector from bird to camera origin (0,0,0)
+    const birdToCameraVector: Vector3D = [
+      -this.position[0],
+      -this.position[1], 
+      -this.position[2]
+    ];
+    
+    // Calculate distance to camera
+    const distanceToCamera = magnitude(birdToCameraVector);
+    
+    // If bird is too close to camera
+    if (distanceToCamera < params.minCameraDistance) {
+      // Calculate force to push away from camera proportionally
+      const normalized = normalize(birdToCameraVector);
+      // Invert the direction to push away from camera
+      const invertedDir: Vector3D = [-normalized[0], -normalized[1], -normalized[2]];
+      
+      // Force strength is proportional to how much closer than the min distance
+      const depthFactor = (params.minCameraDistance - distanceToCamera) / params.minCameraDistance;
+      const strength = Math.min(1.0, depthFactor) * params.maxForce * 2.0;
+      
+      return multiply(invertedDir, strength);
+    }
+    return [0, 0, 0];
+  }
+
   // Calculate wind force
   wind(params: SimulationParams): Vector3D {
     if (params.windFactor === 0) return [0, 0, 0];
@@ -237,7 +266,8 @@ export class Bird {
       this.lastParams.boundaryRadius !== params.boundaryRadius ||
       this.lastParams.windFactor !== params.windFactor ||
       this.lastParams.trailLength !== params.trailLength ||
-      this.lastParams.horizonHeight !== params.horizonHeight
+      this.lastParams.horizonHeight !== params.horizonHeight ||
+      this.lastParams.minCameraDistance !== params.minCameraDistance
     );
   }
 
@@ -256,6 +286,7 @@ export class Bird {
     const boundary = this.boundaries(params);
     const horizonForce = this.horizonConstraint(params);
     const windForce = this.wind(params);
+    const cameraForce = this.cameraDistanceConstraint(params);
     
     // Apply all forces
     this.applyForce(separation);
@@ -264,6 +295,7 @@ export class Bird {
     this.applyForce(boundary);
     this.applyForce(horizonForce);
     this.applyForce(windForce);
+    this.applyForce(cameraForce);
     
     // Apply text formation force if in text mode
     if (isTextMode && this.targetPoint) {

@@ -56,7 +56,15 @@ const CanvasContainer = styled.div<BackgroundProps>`
 const StabilizedControls = () => {
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
+  const { params } = useStore();
   const cameraPositionRef = useRef(new THREE.Vector3(0, 0, 100));
+  
+  // Update min distance based on the parameter
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.minDistance = params.minCameraDistance - 10; // Slight buffer
+    }
+  }, [params.minCameraDistance]);
   
   // Save camera position after user interactions
   useEffect(() => {
@@ -92,7 +100,7 @@ const StabilizedControls = () => {
       enablePan={false}
       enableZoom={true}
       maxDistance={200}
-      minDistance={30}
+      minDistance={params.minCameraDistance - 10}
       dampingFactor={0.2}
       enableDamping={true}
       zoomToCursor={false}
