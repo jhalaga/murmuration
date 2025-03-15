@@ -188,12 +188,22 @@ const ControlPanel: React.FC = () => {
     savePreset,
     backgroundType,
     backgroundImage,
+    youtubeVideoId,
     setBackgroundType,
-    setBackgroundImage 
+    setBackgroundImage,
+    setYoutubeVideoId
   } = useStore();
   
   const [activeTab, setActiveTab] = useState<'simulation' | 'text'>('simulation');
   const [presetName, setPresetName] = useState('');
+  const [videoIdInput, setVideoIdInput] = useState('');
+  
+  // Initialize videoIdInput with the existing youtubeVideoId if it exists
+  useEffect(() => {
+    if (youtubeVideoId) {
+      setVideoIdInput(youtubeVideoId);
+    }
+  }, [youtubeVideoId]);
   
   const handlePresetSave = () => {
     if (presetName.trim()) {
@@ -216,6 +226,34 @@ const ControlPanel: React.FC = () => {
       URL.revokeObjectURL(backgroundImage);
     }
     setBackgroundImage(null);
+    setBackgroundType('color');
+  };
+
+  const handleYoutubeVideoSet = () => {
+    if (videoIdInput.trim()) {
+      // Extract video ID if a full URL is pasted
+      let videoId = videoIdInput.trim();
+      
+      // Handle various YouTube URL formats
+      if (videoId.includes('youtube.com/watch?v=')) {
+        const urlParams = new URLSearchParams(videoId.split('?')[1]);
+        videoId = urlParams.get('v') || videoId;
+      } else if (videoId.includes('youtu.be/')) {
+        videoId = videoId.split('youtu.be/')[1];
+        // Remove any query parameters
+        if (videoId.includes('?')) {
+          videoId = videoId.split('?')[0];
+        }
+      }
+      
+      setYoutubeVideoId(videoId);
+      setBackgroundType('youtube');
+    }
+  };
+
+  const removeYoutubeVideo = () => {
+    setYoutubeVideoId(null);
+    setVideoIdInput('');
     setBackgroundType('color');
   };
 
@@ -295,6 +333,15 @@ const ControlPanel: React.FC = () => {
                   />
                   <span>Custom Image</span>
                 </RadioOption>
+                <RadioOption>
+                  <input
+                    type="radio"
+                    name="backgroundType"
+                    checked={backgroundType === 'youtube'}
+                    onChange={() => setBackgroundType('youtube')}
+                  />
+                  <span>YouTube Video</span>
+                </RadioOption>
               </RadioGroup>
             </ControlGroup>
             
@@ -329,6 +376,51 @@ const ControlPanel: React.FC = () => {
                     </label>
                   </div>
                 )}
+              </ControlGroup>
+            )}
+            
+            {backgroundType === 'youtube' && (
+              <ControlGroup>
+                <Label>YouTube Video ID or URL</Label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Input 
+                    type="text" 
+                    placeholder="Enter video ID or URL" 
+                    value={videoIdInput}
+                    onChange={(e) => setVideoIdInput(e.target.value)}
+                  />
+                  <Button 
+                    onClick={handleYoutubeVideoSet}
+                    style={{ width: 'auto', whiteSpace: 'nowrap' }}
+                  >
+                    Set
+                  </Button>
+                </div>
+                {youtubeVideoId && (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ 
+                      backgroundColor: '#000', 
+                      padding: '5px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <span style={{ color: '#fff', fontFamily: 'monospace' }}>
+                        {youtubeVideoId}
+                      </span>
+                    </div>
+                    <Button 
+                      onClick={removeYoutubeVideo}
+                      style={{ marginTop: '5px' }}
+                    >
+                      Remove Video
+                    </Button>
+                  </div>
+                )}
+                <div style={{ fontSize: '0.75rem', marginTop: '5px', color: 'rgba(255,255,255,0.6)' }}>
+                  You can paste a full YouTube URL or just the video ID
+                </div>
               </ControlGroup>
             )}
           </Section>

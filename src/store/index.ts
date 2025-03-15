@@ -46,10 +46,12 @@ interface StoreState {
   setTextMode: (active: boolean) => void;
   
   // Background settings
-  backgroundType: 'color' | 'image';
+  backgroundType: 'color' | 'image' | 'youtube';
   backgroundImage: string | null;
-  setBackgroundType: (type: 'color' | 'image') => void;
+  youtubeVideoId: string | null;
+  setBackgroundType: (type: 'color' | 'image' | 'youtube') => void;
   setBackgroundImage: (imageUrl: string | null) => void;
+  setYoutubeVideoId: (videoId: string | null) => void;
   
   // Presets
   savePreset: (name: string) => void;
@@ -149,8 +151,10 @@ export const useStore = create<StoreState>((set) => ({
   // Background settings
   backgroundType: 'color',
   backgroundImage: null,
+  youtubeVideoId: null,
   setBackgroundType: (type) => set({ backgroundType: type }),
   setBackgroundImage: (imageUrl) => set({ backgroundImage: imageUrl }),
+  setYoutubeVideoId: (videoId) => set({ youtubeVideoId: videoId }),
   
   presets: PRESET_CONFIGS,
   savePreset: (name) => 

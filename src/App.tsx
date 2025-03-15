@@ -9,9 +9,47 @@ import { useStore } from './store';
 import * as THREE from 'three';
 
 interface BackgroundProps {
-  backgroundType: 'color' | 'image';
+  backgroundType: 'color' | 'image' | 'youtube';
   backgroundImage: string | null;
+  youtubeVideoId: string | null;
 }
+
+// YouTube background component
+const YouTubeBackground = ({ videoId }: { videoId: string }) => {
+  return (
+    <div 
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none', // Allow clicking through to the scene
+        zIndex: 0,
+        overflow: 'hidden'
+      }}
+    >
+      <iframe
+        width="100%"
+        height="100%"
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0`}
+        title="YouTube video player"
+        frameBorder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: '100vw',
+          height: '100vh',
+          transform: 'translate(-50%, -50%) scale(1.2)', // Scale up a bit to fill the container
+          objectFit: 'cover',
+          filter: 'brightness(0.7)', // Dim the video a bit so it doesn't distract from the birds
+        }}
+      />
+    </div>
+  );
+};
 
 const AppContainer = styled.div`
   display: flex;
@@ -129,7 +167,7 @@ const HorizonLine = () => {
 
 const App: React.FC = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
-  const { backgroundType, backgroundImage } = useStore();
+  const { backgroundType, backgroundImage, youtubeVideoId } = useStore();
 
   const togglePanel = () => {
     setIsPanelOpen(!isPanelOpen);
@@ -139,7 +177,14 @@ const App: React.FC = () => {
     <AppContainer>
       <Header togglePanel={togglePanel} isPanelOpen={isPanelOpen} />
       <MainContent>
-        <CanvasContainer backgroundType={backgroundType} backgroundImage={backgroundImage}>
+        <CanvasContainer 
+          backgroundType={backgroundType} 
+          backgroundImage={backgroundImage}
+          youtubeVideoId={youtubeVideoId}
+        >
+          {backgroundType === 'youtube' && youtubeVideoId && (
+            <YouTubeBackground videoId={youtubeVideoId} />
+          )}
           <Canvas
             camera={{ position: [0, 0, 180], fov: 75 }}
             dpr={[1, 2]}
